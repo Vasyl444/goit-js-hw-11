@@ -1,12 +1,11 @@
 import iziToast from "izitoast";
 import SimpleLightbox from "simplelightbox";
-const input = document.querySelector('.form-input');
+import { markup}  from "./js/render-functions";
+import { imagesUrl } from "./js/pixabay-api";
+import { fetchImage } from "./js/pixabay-api";
+const input = document.querySelector('.form-input')
 const gallery = document.querySelector('.gallery');
-let inputValue = '';
 const loader = document.querySelector('.loader');
-input.addEventListener('input', (event) => {
-    inputValue = event.target.value.trim();
-});
 let newGallery = new SimpleLightbox('.gallery a', {
                         overlayOpacity: 0.8,
                         captionSelector: 'img',
@@ -19,21 +18,14 @@ const searchForm = document.querySelector('.form');
 
 searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    if (inputValue === "") {
+    if (input.value === "") {
         searchForm.reset();
         return
     } else {
         gallery.innerHTML = "";
-        const searchParams = new URLSearchParams({
-        key: '43830110-6528f7a21182a7b65b70041af',
-        q: `${inputValue}`,
-        image_type: 'photo',
-        orientation: 'horizontal',
-        safesearch: true,
-        });
-        const url = `https://pixabay.com/api/?${searchParams}`;   
         loader.classList.remove('is-hidden');
-        fetchImage(url)
+
+        fetchImage(imagesUrl(input.value))
             .then(value => {
                 if (value.total === 0) {
                     iziToast.show({
@@ -44,24 +36,24 @@ searchForm.addEventListener('submit', (event) => {
                         messageSize: '14px',
                         messageLineHeight: '',
                         backgroundColor: '#EF4040',
-                        theme: 'light', // dark
-                        color: '', // blue, red, green, yellow
+                        theme: 'light',
+                        color: '',
                         icon: '',
                         iconText: '',
-                        iconColor: '#fff',
-                        iconUrl: './img/Group.svg',
-                        maxWidth: 450,
+                        iconColor: '',
+                        iconUrl: '',
+                        maxWidth: 430,
                         zindex: null,
                         layout: 1,
                         balloon: false,
                         close: true,
                         closeOnEscape: false,
                         closeOnClick: false,
-                        displayMode: 0, // once, replace
-                        position: 'topRight', // bottomRight, bottomLeft, topRight, topLeft, topCenter, bottomCenter, center
+                        displayMode: 0,
+                        position: 'topRight',
                         target: '',
                         targetFirst: true,
-                        timeout: 5000,
+                        timeout: 3000,
                         rtl: false,
                         animateInside: true,
                         drag: true,
@@ -85,47 +77,16 @@ searchForm.addEventListener('submit', (event) => {
                         onClosed: function () { }
                     });
                 } else {
-                    gallery.insertAdjacentHTML('afterbegin', madeMarkup(value));
-                    const galleryRefresh = newGallery.refresh();
-                    newGallery.on('open.simplelightbox', galleryRefresh);
-                     
+                    gallery.insertAdjacentHTML('afterbegin', markup(value));
+                    newGallery.refresh();
+                    newGallery.on('open.simplelightbox');                
                 }
             })
             .catch(console.error())
-            .finally(() => loader.classList.add('is-hidden'));
-    }
-    inputValue = '';
-    searchForm.reset();
+            .finally(() => {
+                loader.classList.add('is-hidden');
+                input.value = '';
+                searchForm.reset();
+    })
+    }   
 }); 
-
-function fetchImage(value) {
-        return fetch(value)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(response.status);
-            }
-            return response.json();
-        })
-    };
-
-function madeMarkup(images) {
-    const imagesArray = images.hits;
-    const galleryItems = [];
-    imagesArray.forEach(image => {
-        galleryItems.push(`<li class="gallery-item">
-            <a class="gallery-link" href="${image.largeImageURL}">
-            <div class="wrapper">
-            <img class="gallery-image" src="${image.webformatURL}" alt="${image.tags}">
-            <div class="title-wrapper">
-            <p class="title">Likes<span>${image.likes}</span></p>
-            <p class="title">Views<span>${image.views}</span></p>
-            <p class="title">Comments<span>${image.comments}</span></p>
-            <p class="title">Downloads<span>${image.downloads}</span></p>
-            </div>
-            </div>
-            </a>
-            </li>`);
-        });
-    // gallery.insertAdjacentHTML("afterbegin", galleryItems.join(""));
-    return galleryItems.join("");
-};
