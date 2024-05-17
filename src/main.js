@@ -18,8 +18,9 @@ const searchForm = document.querySelector('.form');
 
 searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    if (input.value === "") {
+    if (input.value.trim() === "") {
         searchForm.reset();
+        //gallery.innerHTML = "";
         return
     } else {
         gallery.innerHTML = "";
